@@ -46,12 +46,20 @@ from typing import Optional, Sequence
 
 
 def coefficient_of_variation(data):
-    """CV = sigma / |mean|. При mean == 0 возвращает None (вариант 10)."""
+    """CV = stdev / |mean|. При mean == 0 возвращает None (вариант 10)."""
     if not data:
         raise ValueError("Ряд пуст: CV не определён")
-    m = sum(data) / len(data)
+    m = mean(data)
     if m == 0:
         return None
-    variance = sum((x - m) ** 2 for x in data) / len(data)
-    return abs(variance ** 0.5 / m)
+    return abs(stdev(data) / m)
+
+
+def stdev(data):
+    """Выборочное стандартное отклонение (знаменатель n - 1)."""
+    n = len(data)
+    if n < 2:
+        raise ValueError("stdev требует минимум двух значений")
+    m = sum(data) / n
+    return (sum((x - m) ** 2 for x in data) / (n - 1)) ** 0.5
 

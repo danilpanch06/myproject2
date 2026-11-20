@@ -1,6 +1,10 @@
 import json
 
+import io
+import sys
 import pytest
+
+
 
 from num_series.io_json import save_series_json, load_series_json
 from num_series.io_file import load_series_txt, load_series_csv, load_series_auto
