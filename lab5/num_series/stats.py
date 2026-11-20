@@ -42,3 +42,16 @@ def summarize(data: Sequence[float]) -> Dict[str, float]:
         "min": float(min(data)),
         "max": float(max(data)),
     }
+from typing import Optional, Sequence
+
+
+def coefficient_of_variation(data):
+    """CV = sigma / |mean|. При mean == 0 возвращает None (вариант 10)."""
+    if not data:
+        raise ValueError("Ряд пуст: CV не определён")
+    m = sum(data) / len(data)
+    if m == 0:
+        return None
+    variance = sum((x - m) ** 2 for x in data) / len(data)
+    return abs(variance ** 0.5 / m)
+

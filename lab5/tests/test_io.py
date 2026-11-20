@@ -68,3 +68,39 @@ def test_load_auto_json(tmp_path):
     path = tmp_path / "s.json"
     save_series_json([4.0, 5.0], path)
     assert load_series_auto(path) == [4.0, 5.0]
+
+    import io
+import sys as _sys
+
+from num_series.io_file import read_numbers
+from num_series.stats import coefficient_of_variation, mean, stdev
+
+
+def test_read_numbers_ok(tmp_path):
+    p = tmp_path / "nums.txt"
+    p.write_text("1.5\n2\n-3\n\n4\n", encoding="utf-8")
+    assert read_numbers(str(p)) == [1.5, 2.0, -3.0, 4.0]
+
+
+def test_read_numbers_bad_line(tmp_path):
+    p = tmp_path / "bad.txt"
+    p.write_text("1\nabc\n3\n", encoding="utf-8")
+    with pytest.raises(ValueError) as exc:
+        read_numbers(str(p))
+    assert "строка 2" in str(exc.value)
+
+
+def test_read_numbers_stdin(monkeypatch):
+    monkeypatch.setattr(_sys, "stdin", io.StringIO("1\n2.5\n"))
+    assert read_numbers("-") == [1.0, 2.5]
+
+
+def test_cv_matches_manual():
+    data = [1.0, 2.0, 3.0, 4.0, 5.0]
+    expected = abs(stdev(data) / mean(data))
+    assert coefficient_of_variation(data) == pytest.approx(expected)
+
+
+def test_cv_zero_mean_returns_none():
+    assert coefficient_of_variation([-1.0, 1.0]) is None
+

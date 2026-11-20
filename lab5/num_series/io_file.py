@@ -97,3 +97,34 @@ def load_series_auto(path: PathLike) -> List[float]:
         return load_series_csv(path)
     except ValueError:
         return load_series_txt(path)
+import sys
+from typing import List
+
+
+def read_numbers(source: str) -> List[float]:
+    """Читает ряд из текстового файла: одно число в строке.
+
+    source == "-" — читать из stdin.
+    Пустые строки пропускаются.
+    Нечисловая строка -> ValueError с указанием файла и номера строки.
+    """
+    if source == "-":
+        lines = sys.stdin.read().splitlines()
+        origin = "stdin"
+    else:
+        with open(source, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        origin = source
+
+    data: List[float] = []
+    for lineno, raw in enumerate(lines, start=1):
+        text = raw.strip()
+        if not text:
+            continue
+        try:
+            data.append(float(text.replace(",", ".")))
+        except ValueError:
+            raise ValueError(
+                f"{origin}: строка {lineno} — не числовое значение: {text!r}"
+            ) from None
+    return data
