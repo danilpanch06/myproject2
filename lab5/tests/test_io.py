@@ -1,0 +1,70 @@
+import json
+
+import pytest
+
+from num_series.io_json import save_series_json, load_series_json
+from num_series.io_file import load_series_txt, load_series_csv, load_series_auto
+
+
+def test_save_and_load_json(tmp_path):
+    path = tmp_path / "s.json"
+    save_series_json([1.0, 2.0, 3.0], path, meta={"kind": "sine"})
+    data = load_series_json(path)
+    assert data == [1.0, 2.0, 3.0]
+
+
+def test_load_json_with_meta(tmp_path):
+    path = tmp_path / "s.json"
+    save_series_json([1.0, 2.0], path, meta={"kind": "sine", "seed": 42})
+    data, meta = load_series_json(path, with_meta=True)
+    assert meta["kind"] == "sine"
+    assert meta["n"] == 2
+    assert "created" in meta
+
+
+def test_load_json_bare_list(tmp_path):
+    path = tmp_path / "bare.json"
+    path.write_text("[1, 2.5, -3]", encoding="utf-8")
+    assert load_series_json(path) == [1.0, 2.5, -3.0]
+
+
+def test_load_json_missing_data(tmp_path):
+    path = tmp_path / "bad.json"
+    path.write_text('{"meta": {}}', encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_series_json(path)
+
+
+def test_load_json_not_found(tmp_path):
+    with pytest.raises(ValueError):
+        load_series_json(tmp_path / "nope.json")
+
+
+def test_save_empty_raises(tmp_path):
+    with pytest.raises(ValueError):
+        save_series_json([], tmp_path / "s.json")
+
+
+def test_load_txt(tmp_path):
+    path = tmp_path / "s.txt"
+    path.write_text("# комментарий\n1.5\n2\n\n3.5\n", encoding="utf-8")
+    assert load_series_txt(path) == [1.5, 2.0, 3.5]
+
+
+def test_load_txt_not_number(tmp_path):
+    path = tmp_path / "s.txt"
+    path.write_text("abc\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_series_txt(path)
+
+
+def test_load_csv_with_header(tmp_path):
+    path = tmp_path / "s.csv"
+    path.write_text("value;price\n1;10\n2.5;20\n", encoding="utf-8")
+    assert load_series_csv(path) == [1.0, 10.0, 2.5, 20.0]
+
+
+def test_load_auto_json(tmp_path):
+    path = tmp_path / "s.json"
+    save_series_json([4.0, 5.0], path)
+    assert load_series_auto(path) == [4.0, 5.0]
